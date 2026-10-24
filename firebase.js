@@ -1,10 +1,11 @@
-// إعداد Firebase: ضع بيانات مشروعك من Firebase Console هنا.
+// إعداد Firebase لمشروع sstmy-627dc باستخدام Realtime Database
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDmJ4mrcgpWx0KeFsNalc0bFIT3bmOmF_c",
   authDomain: "sstmy-627dc.firebaseapp.com",
+  databaseURL: "https://sstmy-627dc-default-rtdb.firebaseio.com",
   projectId: "sstmy-627dc",
   storageBucket: "sstmy-627dc.firebasestorage.app",
   messagingSenderId: "711278472895",
@@ -13,4 +14,4 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = getDatabase(app);
