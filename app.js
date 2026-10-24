@@ -58,9 +58,37 @@ function openDialog(id){$(id).showModal()}
 $("addMachineBtn").onclick=()=>{ $("machineForm").reset();openDialog("machineDialog")};
 $("addJobBtn").onclick=()=>{$("jobForm").reset();$("jDate").value=dateToday();$("jTechnician").value="";openDialog("jobDialog")};
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
-$("machineForm").onsubmit=async e=>{e.preventDefault();const data={serial:$("mSerial").value.trim(),type:$("mType").value.trim(),brand:$("mBrand").value.trim(),model:$("mModel").value.trim(),section:$("mSection").value.trim(),status:$("mStatus").value,notes:$("mNotes").value.trim(),createdBy:"بدون تسجيل دخول",createdAt:Date.now()};if(!data.serial)return;if(machines.some(m=>m.serial.toLowerCase()===data.serial.toLowerCase()))return message("globalMessage","هذا السيريال مسجل بالفعل.");try{const machineRef=push(ref(db,"machines"));await set(machineRef,data);$("machineDialog").close();await loadAll();message("globalMessage","تم تسجيل الماكينة بنجاح.",true)}catch(err){message("globalMessage",friendlyError(err))}};
+async function saveMachine(e){
+ if(e) e.preventDefault();
+ const form=$("machineForm"), btn=form.querySelector('button[type="submit"]');
+ const data={serial:$("mSerial").value.trim(),type:$("mType").value.trim(),brand:$("mBrand").value.trim(),model:$("mModel").value.trim(),section:$("mSection").value.trim(),status:$("mStatus").value,notes:$("mNotes").value.trim(),createdBy:"بدون تسجيل دخول",createdAt:Date.now()};
+ if(!data.serial || !data.type){ message("globalMessage","اكتب السيريال نمبر ونوع الماكينة أولًا."); if(!data.serial) $("mSerial").focus(); else $("mType").focus(); return; }
+ if(machines.some(m=>String(m.serial||"").toLowerCase()===data.serial.toLowerCase())){message("globalMessage","هذا السيريال مسجل بالفعل.");return;}
+ btn.disabled=true; const oldText=btn.textContent; btn.textContent="جارٍ الحفظ..."; message("globalMessage","جارٍ حفظ الماكينة في قاعدة البيانات...",true);
+ try {
+   const machineRef=push(ref(db,"machines"));
+   await set(machineRef,data);
+   const verify=await get(ref(db,"machines/"+machineRef.key));
+   if(!verify.exists()) throw new Error("تم إرسال الطلب لكن لم يظهر السجل عند التحقق. راجع قواعد Realtime Database.");
+   $("machineDialog").close();
+   await loadAll();
+   message("globalMessage","تم حفظ الماكينة بنجاح في Firebase.",true);
+ } catch(err) {
+   message("globalMessage","تعذر حفظ الماكينة: "+friendlyError(err));
+   console.error("saveMachine failed",err);
+ } finally { btn.disabled=false; btn.textContent=oldText; }
+}
+$("machineForm").addEventListener("submit",saveMachine);
+// بعض متصفحات الهاتف لا توضح سبب منع الإرسال بسبب الحقول المطلوبة؛ أظهر تنبيهًا واضحًا عند الضغط.
+$("machineForm").querySelector('button[type="submit"]').addEventListener("click",()=>{
+ const form=$("machineForm");
+ if(!$("mSerial").value.trim() || !$("mType").value.trim()) message("globalMessage","لازم تكتب السيريال نمبر ونوع الماكينة قبل الحفظ.");
+});
 $("jobForm").onsubmit=async e=>{e.preventDefault();const serial=$("jSerial").value.trim();if(!machines.some(m=>m.serial.toLowerCase()===serial.toLowerCase()))return message("globalMessage","السيريال غير موجود. أضف الماكينة أولًا.");const parts=$("jParts").value.split("\n").map(s=>s.trim()).filter(Boolean).map(line=>{const a=line.split("|").map(x=>x.trim());return{name:a[0]||"قطعة غير مسماة",qty:Number(a[1])||1,note:a.slice(2).join(" | ")}});const data={serial,date:$("jDate").value,technician:$("jTechnician").value.trim(),kind:$("jKind").value,fault:$("jFault").value.trim(),action:$("jAction").value.trim(),status:$("jStatus").value,downtime:Number($("jDowntime").value)||0,parts,notes:$("jNotes").value.trim(),createdBy:"بدون تسجيل دخول",createdAt:Date.now()};try{const jobRef=push(ref(db,"maintenance"));await set(jobRef,data);const m=machines.find(x=>x.serial.toLowerCase()===serial.toLowerCase());await update(ref(db,"machines/"+m.id),{status:data.status,lastMaintenanceDate:data.date});$("jobDialog").close();await loadAll();message("globalMessage","تم حفظ عملية الصيانة وقطع الغيار وربطها بالماكينة.",true)}catch(err){message("globalMessage",friendlyError(err))}};
 $("machineSearch").oninput=renderMachines;$("jobSearch").oninput=renderJobs;
 async function startScanner(target){scannerTarget=target;openDialog("scannerDialog");$("scannerRegion").innerHTML="";message("scannerMessage","جارٍ تجهيز قارئ الكاميرا...",true);try{if(!window.isSecureContext)throw new Error("قارئ الكاميرا يحتاج HTTPS أو localhost.");if(!("BarcodeDetector" in window))throw new Error("المتصفح لا يدعم قارئ الباركود المدمج. استخدم إدخال السيريال يدويًا أو جرّب متصفحًا حديثًا.");const detector=new BarcodeDetector({formats:["qr_code","code_128","code_39","ean_13","ean_8","upc_a","upc_e","itf","codabar"]});const video=document.createElement("video");video.setAttribute("playsinline","");video.autoplay=true;$("scannerRegion").appendChild(video);const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}});video.srcObject=stream;scanner={stream,video,detector,active:true};message("scannerMessage","وجّه الكاميرا نحو الباركود أو QR.",true);const tick=async()=>{if(!scanner?.active)return;try{if(video.readyState>=2){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){$(scannerTarget).value=codes[0].rawValue;stopScanner();$("scannerDialog").close();message("globalMessage","تمت قراءة الكود. راجع السيريال قبل الحفظ.",true);return}}}catch(e){}requestAnimationFrame(tick)};video.onloadeddata=()=>requestAnimationFrame(tick)}catch(e){message("scannerMessage",e.message+" يمكنك إدخال السيريال يدويًا.");}}
 function stopScanner(){if(scanner){scanner.active=false;scanner.stream.getTracks().forEach(t=>t.stop());scanner=null}}
 $("scanSerialBtn").onclick=()=>startScanner("mSerial");$("scanMachineBtn").onclick=()=>startScanner("machineSearch");$("scanJobBtn").onclick=()=>startScanner("jSerial");$("stopScannerBtn").onclick=stopScanner;$("scannerDialog").addEventListener("close",stopScanner);
+
+window.addEventListener("error", e => { try { message("globalMessage", "حدث خطأ في تشغيل الصفحة: " + (e.message || "خطأ JavaScript")); } catch(_) {} });
+window.addEventListener("unhandledrejection", e => { try { message("globalMessage", "فشلت عملية: " + (e.reason?.message || String(e.reason || "خطأ غير معروف"))); } catch(_) {} });
