@@ -6,31 +6,17 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="loginView" class="login-wrap">
-  <div class="login-card">
-    <div class="brand-mark">SM</div><p class="eyebrow">نظام إدارة الصيانة</p>
-    <h1>صيانة ماكينات الخياطة</h1><p class="muted">سجل موحد للماكينات وقطع الغيار والفنيين</p>
-    <form id="loginForm">
-      <label>البريد الإلكتروني<input id="loginEmail" type="email" required autocomplete="username" placeholder="name@factory.com"></label>
-      <label>كلمة المرور<input id="loginPassword" type="password" required autocomplete="current-password" placeholder="••••••••"></label>
-      <button class="btn primary full" type="submit">تسجيل الدخول</button>
-    </form>
-    <p id="loginMessage" class="message"></p>
-    <p class="tiny">يجب على مدير النظام إنشاء الحسابات وتحديد الصلاحيات من Firebase Console.</p>
-  </div>
-</div>
 <div id="appView" class="app hidden">
   <aside class="sidebar">
     <div class="brand"><div class="brand-mark">SM</div><div><b>SEW MAINT</b><small>إدارة الصيانة</small></div></div>
-    <div class="profile"><div class="avatar" id="avatar">م</div><div><b id="userName">مستخدم</b><small id="userRole">...</small></div></div>
+    <div class="profile"><div class="avatar" id="avatar">ص</div><div><b id="userName">فريق الصيانة</b><small id="userRole">دخول مباشر بدون حساب</small></div></div>
     <nav>
       <button class="nav active" data-page="dashboard">◫ <span>لوحة التحكم</span></button>
       <button class="nav" data-page="machines">▤ <span>الماكينات</span></button>
       <button class="nav" data-page="maintenance">⚙ <span>سجل الصيانة</span></button>
       <button class="nav" data-page="parts">◇ <span>قطع الغيار</span></button>
-      <button class="nav admin-only" data-page="users">♙ <span>المستخدمون والصلاحيات</span></button>
     </nav>
-    <div class="sidebar-bottom"><div class="online-dot"></div> قاعدة بيانات سحابية مشتركة <button id="logoutBtn" class="btn ghost full">تسجيل الخروج ↗</button></div>
+    <div class="sidebar-bottom"><div class="online-dot"></div> قاعدة بيانات سحابية مشتركة<br><small>دخول مباشر بدون تسجيل</small></div>
   </aside>
   <main class="main">
     <header class="topbar"><div><p class="eyebrow" id="pageEyebrow">نظرة عامة</p><h2 id="pageTitle">لوحة التحكم</h2></div><div class="top-actions"><span class="date-pill" id="todayDate"></span><button class="btn primary" id="quickAdd">＋ تسجيل جديد</button></div></header>
@@ -56,16 +42,7 @@
     <section id="page-parts" class="page hidden">
       <div class="panel"><div class="panel-head"><div><h3>قطع الغيار</h3><p>قائمة القطع التي تم تسجيلها في عمليات الصيانة</p></div></div><div id="partsTable" class="table-wrap"></div></div>
     </section>
-    <section id="page-users" class="page hidden">
-      <div class="panel"><div class="panel-head"><div><h3>المستخدمون والصلاحيات</h3><p>تُدار الحسابات من Firebase Authentication، وتُسجل الأدوار هنا.</p></div></div>
-      <div class="notice">لأمان الحسابات، أنشئ المستخدم أولاً من Firebase Console → Authentication → Add user، ثم أضف بريده ودوره هنا. لا يتم تخزين كلمات المرور داخل الموقع.</div>
-      <form id="userForm" class="form-grid">
-        <label>البريد الإلكتروني<input id="newUserEmail" type="email" required placeholder="technician@factory.com"></label>
-        <label>الاسم الظاهر<input id="newUserName" required placeholder="اسم الفني"></label>
-        <label>الدور<select id="newUserRole"><option value="technician">فني صيانة</option><option value="supervisor">مشرف</option><option value="viewer">مشاهدة فقط</option><option value="admin">مدير</option></select></label>
-        <div class="form-actions"><button class="btn primary" type="submit">حفظ المستخدم / الدور</button></div>
-      </form><div id="usersTable" class="table-wrap"></div></div>
-    </section>
+
   </main>
 </div>
 <dialog id="machineDialog" class="modal"><form id="machineForm"><div class="modal-head"><div><p class="eyebrow">قاعدة الماكينات</p><h3>إضافة ماكينة</h3></div><button type="button" class="close" data-close="machineDialog">×</button></div>

@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // تنبيه: هذه القواعد تسمح لأي زائر بالقراءة والكتابة بدون تسجيل دخول.
+    // استخدمها فقط إذا كنت تقبل أن أي شخص يعرف رابط الموقع قد يغيّر البيانات.
+    match /machines/{machineId} {
+      allow read, write: if true;
+    }
+    match /maintenance/{jobId} {
+      allow read, write: if true;
+    }
+  }
+}
